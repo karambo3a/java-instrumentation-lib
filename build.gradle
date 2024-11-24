@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(22))
+    }
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation project(':instrumentation')
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Define a custom task to run your application with a Java agent
+tasks.register('runWithAgent', JavaExec) {
+
+    group = "Application"
+    description = "Runs the application with a Java agent"
+
+    // Set the main class
+    setMainClass("org.example.Example")
+
+    // Set the classpath
+    classpath = sourceSets.main.runtimeClasspath
+
+    doFirst {
+        // Get the agent JAR file from the other module's task
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
+    }
+
+    // Add the Java agent argument
+    // Replace 'path/to/your/agent.jar' with the actual path to your Java agent JAR
+    jvmArgs += [
+            '-javaagent:/home/karambo3a/Desktop/study/instrumentation/example/instrumentation/build/libs/coverage-agent-1.0-SNAPSHOT-agent.jar',
+            '--enable-preview'
+    ]
+
+}

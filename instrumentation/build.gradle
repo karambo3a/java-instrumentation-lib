@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(22))
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add("--enable-preview")
+    options.compilerArgs.add("-Xlint:preview")
+}
+
+tasks.register('agentJar', Jar) {
+    archiveBaseName = 'coverage-agent'
+    archiveClassifier = 'agent'
+
+    from sourceSets.main.output
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    manifest {
+        attributes(
+                'Premain-Class': 'org.example.Agent',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true'
+        )
+    }
+
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
+
+test {
+    useJUnitPlatform()
+}
