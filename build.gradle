@@ -12,7 +12,6 @@ java {
     }
 }
 
-
 repositories {
     mavenCentral()
 }
@@ -41,14 +40,15 @@ tasks.register('runWithAgent', JavaExec) {
 
     doFirst {
         // Get the agent JAR file from the other module's task
-        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
+//        def lineAgentJar = project(':instrumentation').tasks.lineAgentJar.outputs.files.singleFile
+        def branchAgentJar = project(':instrumentation').tasks.branchAgentJar.outputs.files.singleFile
     }
 
     // Add the Java agent argument
     // Replace 'path/to/your/agent.jar' with the actual path to your Java agent JAR
     jvmArgs += [
-            '-javaagent:/home/karambo3a/Desktop/study/instrumentation/example/instrumentation/build/libs/coverage-agent-1.0-SNAPSHOT-agent.jar',
+//            '-javaagent:/home/karambo3a/Desktop/study/instrumentation/example/instrumentation/build/libs/line-coverage-agent-1.0-SNAPSHOT-agent.jar',
+            '-javaagent:/home/karambo3a/Desktop/study/instrumentation/example/instrumentation/build/libs/branch-coverage-agent-1.0-SNAPSHOT-agent.jar',
             '--enable-preview'
     ]
-
 }

@@ -1,5 +1,7 @@
 package org.example;
 
+import org.instrumentation.tracker.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +14,7 @@ public class Example {
     public static int getNumber1(int a, Long b) {
         if (a > b) {
             return 1;
-        } else if (a < b) {
+        } else if (a < b) {  // 1 < 2
             return -1;
         } else {
             return 0;
@@ -110,7 +112,8 @@ public class Example {
 
         System.out.println("---");
         System.out.println("Coverage\n");
-        CoverageTracker.coverage.forEach(System.out::println);
+        LineCoverageTracker.lineCoverage.forEach(System.out::println);
+        BranchCoverageTracker.branchCoverage.forEach(System.out::println);
     }
 }
 
