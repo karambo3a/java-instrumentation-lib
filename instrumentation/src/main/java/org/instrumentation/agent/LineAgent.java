@@ -1,4 +1,6 @@
-package org.example;
+package org.instrumentation.agent;
+
+import org.instrumentation.tracker.LineCoverageTracker;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -11,30 +13,30 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
-public class Agent {
+public class LineAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
 
         // prints method's signature
-        inst.addTransformer(new ClassFileTransformer() {
-            @Override
-            public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-                if (!className.equals("org/example/Example")) {
-                    return classFileBuffer;
-                }
-                System.out.println("Methods\n");
-                var classModel = ClassFile.of().parse(classFileBuffer);
-                var methods = classModel.methods();
-                for (var method : methods) {
-                    String descriptor = method.methodType().stringValue();
-                    System.out.println(STR."\{method.methodName().stringValue()} \{descriptor}");
-                }
-                return classFileBuffer;
-            }
-        });
+//        inst.addTransformer(new ClassFileTransformer() {
+//            @Override
+//            public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+//                                    ProtectionDomain protectionDomain, byte[] classFileBuffer) {
+//                if (!className.equals("org/example/Example")) {
+//                    return classFileBuffer;
+//                }
+//                System.out.println("Methods\n");
+//                var classModel = ClassFile.of().parse(classFileBuffer);
+//                var methods = classModel.methods();
+//                for (var method : methods) {
+//                    String descriptor = method.methodType().stringValue();
+//                    System.out.println(STR."\{method.methodName().stringValue()} \{descriptor}");
+//                }
+//                return classFileBuffer;
+//            }
+//        });
 
-        // adds coverage tracker
+//         adds line coverage tracker
         inst.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -75,10 +77,11 @@ public class Agent {
                         builder.ldc(methodSignature)
                                 .ldc(String.valueOf(i.line()))
                                 .invokestatic(
-                                        ClassDesc.of("org.example.CoverageTracker"),
+                                        ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
                                         "logCoverage",
                                         MethodTypeDesc.ofDescriptor("(Ljava/lang/String;Ljava/lang/String;)V")
                                 );
+                        LineCoverageTracker.logAllLine(methodSignature, String.valueOf(i.line()));
                     }
                     builder.with(element);
                 };

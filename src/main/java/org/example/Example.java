@@ -1,5 +1,7 @@
 package org.example;
 
+import org.instrumentation.tracker.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,14 +11,15 @@ public class Example {
     public String const2;
     public static List<Integer> list = new ArrayList<>();
 
-    public static int getNumber1(int a, Long b) {
+    public static int getNumber1(int a, Long b) {    //// a = 1  b = 2
         if (a > b) {
-            return 1;
-        } else if (a < b) {
             return -1;
+        } else if (a < b) {  /// 1 < 2
+            int f = 1;
         } else {
             return 0;
         }
+        return 10;
     }
 
     public static int getNumber2(int a, Long b, String c) {
@@ -31,13 +34,13 @@ public class Example {
         System.out.println("void method");
     }
 
-    public static void ifStatement(int a) {
+    public static void ifStatement(int a) {   //// a = 10
         if (a > 10) {
             list.add(a);
         }
     }
 
-    public static void ifELseStatement(int a) {
+    public static void ifELseStatement(int a) {   //// a = -1
         if (a > 10) {
             list.add(a);
         } else if (a < 0) {
@@ -47,7 +50,7 @@ public class Example {
         }
     }
 
-    public static int switchStatement(int a) {
+    public static int lookUpSwitch(int a) {     /// a = 10
         switch (a) {
             case 10 -> {
                 return 10 + 10;
@@ -61,7 +64,22 @@ public class Example {
         }
     }
 
-    public static void forLoop(int a) {
+    public static int tableSwitch(int a) {     /// a = 20
+        switch (a) {
+            case 10 -> {
+                return 10 + 10;
+            }
+            case 11 -> {
+                return 20 + 20;
+            }
+            case 12 -> {
+                return 30 + 30;
+            }
+        }
+        return 10;
+    }
+
+    public static void forLoop(int a) {    /// a = 11
         for (int i = a; i < 10; ++i) {
             list.add(i);
         }
@@ -71,7 +89,7 @@ public class Example {
         }
     }
 
-    public static void whileLoop(int a) {
+    public static void whileLoop(int a) {   /// a = 11
         while (a < 10) {
             list.add(a);
             a++;
@@ -83,7 +101,7 @@ public class Example {
         }
     }
 
-    public static void doWhileLoop(int a) {
+    public static void doWhileLoop(int a) {   ///  a = 9
         do {
             list.add(a);
             a++;
@@ -95,6 +113,50 @@ public class Example {
         } while (a > 10);
     }
 
+    public static boolean instanceOfStatement(Object a) {   ///  a = 9
+        if (a instanceof String) {
+            return true;
+        }
+        if (a instanceof Integer) {
+            return true;
+        }
+        return false;
+    }
+
+    public static void nestedIfElseLoop(int a) {   ///  a = 9
+        if (a > 10) {
+            if (a < 20) {
+                System.out.println(100);
+            } else {
+                System.out.println(200);
+            }
+        } else {
+            if (a < 0) {
+                System.out.println(300);
+            } else {
+                System.out.println(400);
+            }
+        }
+    }
+
+    public static void ternaryOperator(int a) {
+        a = a == 0 ? 1 : 2;
+    }
+
+    public static void tryCatch() {
+        try {
+            throw new RuntimeException();
+        } catch (Exception e) {
+
+        }
+        try {
+            int a = 0;
+        } catch (Exception e) {
+
+        }
+    }
+
+
     public static void main(String[] args) {
         System.out.println("---");
         System.out.println("Main output\n");
@@ -103,14 +165,31 @@ public class Example {
         voidMethod();
         ifStatement(10);
         ifELseStatement(-1);
-        System.out.println(switchStatement(10));
+        System.out.println(lookUpSwitch(10));
+        System.out.println(tableSwitch(10));
         forLoop(11);
         whileLoop(11);
         doWhileLoop(9);
+        System.out.println(instanceOfStatement(10));
+        nestedIfElseLoop(15);
+        ternaryOperator(1);
+        tryCatch();
 
         System.out.println("---");
-        System.out.println("Coverage\n");
-        CoverageTracker.coverage.forEach(System.out::println);
+        System.out.println("Line Coverage\n");
+        LineCoverageTracker.lineCoverage.forEach(System.out::println);
+        System.out.println();
+        LineCoverageTracker.allLine.forEach(System.out::println);
+        LineCoverageTracker.getClassStat();
+        LineCoverageTracker.getMethodStat("nestedIfElseLoop");
+
+        System.out.println("---");
+        System.out.println("Branch Coverage\n");
+        BranchCoverageTracker.branchCoverage.forEach(System.out::println);
+        System.out.println();
+        BranchCoverageTracker.allBranch.forEach(System.out::println);
+        BranchCoverageTracker.getClassStat();
+        BranchCoverageTracker.getMethodStat("nestedIfElseLoop");
     }
 }
 
