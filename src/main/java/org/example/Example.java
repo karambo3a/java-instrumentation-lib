@@ -166,7 +166,7 @@ public class Example {
         ifStatement(10);
         ifELseStatement(-1);
         System.out.println(lookUpSwitch(10));
-        System.out.println(tableSwitch(10));
+        System.out.println(tableSwitch(20));
         forLoop(11);
         whileLoop(11);
         doWhileLoop(9);

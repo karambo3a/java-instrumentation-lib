@@ -7,12 +7,12 @@ public class BranchCoverageTracker {
     public static final Set<String> branchCoverage = new TreeSet<>();
     public static final Set<String> allBranch = new TreeSet<>();
 
-    public static void logCoverage(String methodSignature, String lineNumber) {
-        branchCoverage.add(String.format("%s: %s", methodSignature, lineNumber));
+    public static void logCoverage(String methodSignature, String branchNumber) {
+        branchCoverage.add(String.format("%s: %s", methodSignature, branchNumber));
     }
 
-    public static void logAllBranch(String methodSignature, String lineNumber) {
-        allBranch.add(String.format("%s: %s", methodSignature, lineNumber));
+    public static void logAllBranch(String methodSignature, String branchNumber) {
+        allBranch.add(String.format("%s: %s", methodSignature, branchNumber));
     }
 
     static public void getMethodStat(String methodName) {
