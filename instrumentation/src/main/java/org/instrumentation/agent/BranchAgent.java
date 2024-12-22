@@ -17,21 +17,24 @@ import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BranchAgent {
     private static Integer classNumber = 0;
 
     public static void premain(String agentArgs, Instrumentation inst) {
+        Set<String> classes = Set.of(agentArgs.split(","));
 
 //      adds branch coverage tracker
         inst.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-                if (!className.startsWith("org/example/Example")) {                                         //TODO
+                if (!classes.contains(className)) {
                     return classFileBuffer;
                 }
+
                 classNumber++;
                 BranchCoverageTracker.classes.add(className);
                 BranchCoverageTracker.methods.add(new ArrayList<>());

@@ -21,16 +21,18 @@ public class LineCoverageTracker {
         System.out.println("===" + methodName + "===");
         System.out.println("Visited lines: " + visitedLines);
         System.out.println("All lines: " + allLines);
-        System.out.println(String.format("%.4f", (double)visitedLines / allLines * 100) + "%");
+        System.out.println(String.format("%.4f", (double) visitedLines / allLines * 100) + "%");
         System.out.println("===");
         System.out.println();
     }
 
-    static public void getClassStat() {
+    static public void getClassStat(String className) {
+        long visitedLines = lineCoverage.stream().filter(line -> line.contains(className)).count();
+        long allLines = allLine.stream().filter(line -> line.contains(className)).count();
         System.out.println("===");
-        System.out.println("Visited lines: " + lineCoverage.size());
-        System.out.println("All lines: " + allLine.size());
-        System.out.println(String.format("%.4f", (double)lineCoverage.size() / allLine.size() * 100) + "%");
+        System.out.println("Visited lines: " + visitedLines);
+        System.out.println("All lines: " + allLines);
+        System.out.println(String.format("%.4f", (double) visitedLines / allLines * 100) + "%");
         System.out.println("===");
         System.out.println();
     }

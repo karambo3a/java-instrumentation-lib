@@ -12,10 +12,12 @@ import java.lang.constant.MethodTypeDesc;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.Set;
 
 public class LineAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
+        Set<String> classes = Set.of(agentArgs.split(","));
 
         // prints method's signature
 //        inst.addTransformer(new ClassFileTransformer() {
@@ -41,7 +43,7 @@ public class LineAgent {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-                if (!className.equals("org/example/Example")) {
+                if (!classes.contains(className)) {
                     return classFileBuffer;
                 }
 
@@ -49,7 +51,7 @@ public class LineAgent {
                     if (element instanceof MethodModel methodModel) {
                         String methodName = methodModel.methodName().stringValue();
                         String methodDescriptor = methodModel.methodType().stringValue();
-                        builder.transformMethod(methodModel, createMethodTransform(methodName + methodDescriptor));
+                        builder.transformMethod(methodModel, createMethodTransform(className + " " + methodName + methodDescriptor));
                     } else {
                         builder.with(element);
                     }

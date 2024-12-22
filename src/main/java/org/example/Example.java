@@ -157,7 +157,7 @@ public class Example {
     }
 
 
-    public static void main(String[] args) {
+    public static void main() {
         System.out.println("---");
         System.out.println("Main output\n");
         System.out.println(getNumber1(1, 2L));
@@ -174,21 +174,16 @@ public class Example {
         nestedIfElseLoop(15);
         ternaryOperator(1);
         tryCatch();
+        Example2.fun();
 
         System.out.println("---");
         System.out.println("Line Coverage\n");
-        LineCoverageTracker.lineCoverage.forEach(System.out::println);
-        System.out.println();
-        LineCoverageTracker.allLine.forEach(System.out::println);
-        LineCoverageTracker.getClassStat();
+        LineCoverageTracker.getClassStat("org/example/Example");
         LineCoverageTracker.getMethodStat("nestedIfElseLoop");
 
         System.out.println("---");
         System.out.println("Branch Coverage\n");
-        BranchCoverageTracker.branchCoverage.forEach(System.out::println);
-        System.out.println();
-        BranchCoverageTracker.allBranch.forEach(System.out::println);
-        BranchCoverageTracker.getClassStat();
+        BranchCoverageTracker.getClassStat("org/example/Example");
         BranchCoverageTracker.getMethodStat("nestedIfElseLoop");
     }
 }

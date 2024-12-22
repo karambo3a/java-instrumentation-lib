@@ -22,7 +22,7 @@ public class BranchCoverageTracker {
                 ((branchCnt & branchMax) << (CLASS_BITS + METHOD_BITS)));
     }
 
-    private static Integer[] uncodeBranch(Long code) {
+    public static Integer[] uncodeBranch(Long code) {
         long branchNumber = ((code >> (CLASS_BITS + METHOD_BITS)) & branchMax);
         long methodNumber = ((code >> CLASS_BITS) & methodsMax);
         long classNumber = (code & classMax);
@@ -60,11 +60,18 @@ public class BranchCoverageTracker {
         System.out.println();
     }
 
-    static public void getClassStat() {
+    static public void getClassStat(String className) {
+        long visitedBranches = 0;
+        for (var branch : branchCoverage) {
+            var data = uncodeBranch(branch);
+            if (classes.get(data[0] - 1).equals(className)) {
+                ++visitedBranches;
+            }
+        }
         System.out.println("===");
-        System.out.println(STR."Visited branches: \{branchCoverage.size()}");
+        System.out.println(STR."Visited branches: \{visitedBranches}");
         System.out.println(STR."All branches: \{allBranch.size()}");
-        System.out.println(STR."\{String.format("%.4f", (double) branchCoverage.size() / allBranch.size() * 100)}%");
+        System.out.println(STR."\{String.format("%.4f", (double) visitedBranches / allBranch.size() * 100)}%");
         System.out.println("===");
         System.out.println();
     }
