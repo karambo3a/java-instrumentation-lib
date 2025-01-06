@@ -12,9 +12,11 @@ import java.lang.constant.MethodTypeDesc;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class LineAgent {
+    private static Integer classNumber = 0;
 
     public static void premain(String agentArgs, Instrumentation inst) {
         Set<String> classes = Set.of(agentArgs.split(","));
@@ -28,46 +30,15 @@ public class LineAgent {
                     return classFileBuffer;
                 }
 
-                ClassTransform classTransform = (builder, element) -> {
-                    if (element instanceof MethodModel methodModel) {
-                        String methodName = methodModel.methodName().stringValue();
-                        String methodDescriptor = methodModel.methodType().stringValue();
-                        builder.transformMethod(methodModel, createMethodTransform(className + " " + methodName + methodDescriptor));
-                    } else {
-                        builder.with(element);
-                    }
-                };
+                classNumber++;
+                LineCoverageTracker.classes.add(className);
+                LineCoverageTracker.methods.add(new ArrayList<>());
+                ClassTransform classTransform = new ClassTransformStateful(classNumber);
 
                 var oldClassFile = ClassFile.of().parse(classFileBuffer);
                 var newClassFile = ClassFile.of().transform(oldClassFile, classTransform);
                 saveClassFile(newClassFile);
                 return newClassFile;
-            }
-
-            private MethodTransform createMethodTransform(String methodSignature) {
-                return (builder, element) -> {
-                    if (element instanceof CodeModel cm) {
-                        builder.transformCode(cm, createCodeTransform(methodSignature));
-                    } else {
-                        builder.with(element);
-                    }
-                };
-            }
-
-            private CodeTransform createCodeTransform(String methodSignature) {
-                return (builder, element) -> {
-                    if (element instanceof LineNumber i) {
-                        builder.ldc(methodSignature)
-                                .ldc(String.valueOf(i.line()))
-                                .invokestatic(
-                                        ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
-                                        "logCoverage",
-                                        MethodTypeDesc.ofDescriptor("(Ljava/lang/String;Ljava/lang/String;)V")
-                                );
-                        LineCoverageTracker.logAllLine(methodSignature, String.valueOf(i.line()));
-                    }
-                    builder.with(element);
-                };
             }
 
             private void saveClassFile(byte[] classFile) {
@@ -79,6 +50,52 @@ public class LineAgent {
                 }
             }
         });
+    }
+
+    private static class ClassTransformStateful implements ClassTransform {
+        private int methodNumber = 0;
+        private final int classNumber;
+
+        public ClassTransformStateful(Integer classCnt) {
+            this.classNumber = classCnt;
+        }
+
+        @Override
+        public void accept(ClassBuilder builder, ClassElement element) {
+                if (element instanceof MethodModel methodModel) {
+                    methodNumber++;
+                    LineCoverageTracker.methods.get(classNumber - 1).add(methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
+                    builder.transformMethod(methodModel, createMethodTransform());
+                } else {
+                    builder.with(element);
+                }
+        }
+
+        private MethodTransform createMethodTransform() {
+            return (builder, element) -> {
+                if (element instanceof CodeModel cm) {
+                    builder.transformCode(cm, createCodeTransform());
+                } else {
+                    builder.with(element);
+                }
+            };
+        }
+
+        private CodeTransform createCodeTransform() {
+            return (builder, element) -> {
+                if (element instanceof LineNumber i) {
+                    Long code = LineCoverageTracker.codeLine(classNumber, methodNumber, i.line());
+                    builder.ldc(code.toString())
+                            .invokestatic(
+                                    ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
+                                    "logCoverage",
+                                    MethodTypeDesc.ofDescriptor("(Ljava/lang/String;)V")
+                            );
+                    LineCoverageTracker.logAllLine(code);
+                }
+                builder.with(element);
+            };
+        }
     }
 }
 

@@ -1,38 +1,79 @@
 package org.instrumentation.tracker;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class LineCoverageTracker {
-    public static final Set<String> lineCoverage = new TreeSet<>();
-    public static final Set<String> allLine = new TreeSet<>();
+    public static final Set<Long> lineCoverage = new TreeSet<>();
+    public static final Set<Long> allLine = new TreeSet<>();
+    public static final List<String> classes = new ArrayList<>();
+    public static final List<List<String>> methods = new ArrayList<>();
 
-    public static void logCoverage(String methodSignature, String lineNumber) {
-        lineCoverage.add(String.format("%s: line=%s", methodSignature, lineNumber));
+    private static final int CLASS_BITS = 21;
+    private static final int METHOD_BITS = 21;
+    private static final int BRANCH_BITS = 21;
+    private static final long classMax = (1 << CLASS_BITS) - 1;
+    private static final long methodsMax = (1 << METHOD_BITS) - 1;
+    private static final long branchMax = (1 << BRANCH_BITS) - 1;
+
+    public static Long codeLine(Integer classCnt, Integer methodCnt, Integer lineCnt) {
+        return ((classCnt & classMax) |
+                ((methodCnt & methodsMax) << (CLASS_BITS)) |
+                ((lineCnt & branchMax) << (CLASS_BITS + METHOD_BITS)));
     }
 
-    public static void logAllLine(String methodSignature, String lineNumber) {
-        allLine.add(String.format("%s: line=%s", methodSignature, lineNumber));
+    public static Integer[] uncodeLine(Long code) {
+        long lineNumber = ((code >> (CLASS_BITS + METHOD_BITS)) & branchMax);
+        long methodNumber = ((code >> CLASS_BITS) & methodsMax);
+        long classNumber = (code & classMax);
+        return new Integer[]{(int) classNumber, (int) methodNumber, (int) lineNumber};
+    }
+
+    public static void logCoverage(String lineCode) {
+        lineCoverage.add(Long.valueOf(lineCode));
+    }
+
+    public static void logAllLine(Long lineCode) {
+        allLine.add(lineCode);
     }
 
     static public void getMethodStat(String methodName) {
-        long visitedLines = lineCoverage.stream().filter(line -> line.contains(methodName)).count();
-        long allLines = allLine.stream().filter(line -> line.contains(methodName)).count();
-        System.out.println("===" + methodName + "===");
-        System.out.println("Visited lines: " + visitedLines);
-        System.out.println("All lines: " + allLines);
-        System.out.println(String.format("%.4f", (double) visitedLines / allLines * 100) + "%");
+        long visitedLines = 0;
+        for (var branch : lineCoverage) {
+            var data = uncodeLine(branch);
+            if (methods.get(data[0] - 1).get(data[1] - 1).contains(methodName)) {
+                ++visitedLines;
+            }
+        }
+        long allLines = 0;
+        for (var line : allLine) {
+            var data = uncodeLine(line);
+            if (methods.get(data[0] - 1).get(data[1] - 1).contains(methodName)) {
+                ++allLines;
+            }
+        }
+        System.out.println(STR."===\{methodName}===");
+        System.out.println(STR."Visited lines: \{visitedLines}");
+        System.out.println(STR."All lines: \{allLines}");
+        System.out.println(STR."\{String.format("%.4f", (double) visitedLines / allLines * 100)}%");
         System.out.println("===");
         System.out.println();
     }
 
     static public void getClassStat(String className) {
-        long visitedLines = lineCoverage.stream().filter(line -> line.contains(className)).count();
-        long allLines = allLine.stream().filter(line -> line.contains(className)).count();
+        long visitedLines = 0;
+        for (var branch : lineCoverage) {
+            var data = uncodeLine(branch);
+            if (classes.get(data[0] - 1).equals(className)) {
+                ++visitedLines;
+            }
+        }
         System.out.println("===");
-        System.out.println("Visited lines: " + visitedLines);
-        System.out.println("All lines: " + allLines);
-        System.out.println(String.format("%.4f", (double) visitedLines / allLines * 100) + "%");
+        System.out.println(STR."Visited lines: \{visitedLines}");
+        System.out.println(STR."All lines: \{allLine.size()}");
+        System.out.println(STR."\{String.format("%.4f", (double) visitedLines / allLine.size() * 100)}%");
         System.out.println("===");
         System.out.println();
     }
