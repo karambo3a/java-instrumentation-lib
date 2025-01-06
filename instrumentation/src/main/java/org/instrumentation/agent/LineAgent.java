@@ -19,25 +19,6 @@ public class LineAgent {
     public static void premain(String agentArgs, Instrumentation inst) {
         Set<String> classes = Set.of(agentArgs.split(","));
 
-        // prints method's signature
-//        inst.addTransformer(new ClassFileTransformer() {
-//            @Override
-//            public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-//                                    ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-//                if (!className.equals("org/example/Example")) {
-//                    return classFileBuffer;
-//                }
-//                System.out.println("Methods\n");
-//                var classModel = ClassFile.of().parse(classFileBuffer);
-//                var methods = classModel.methods();
-//                for (var method : methods) {
-//                    String descriptor = method.methodType().stringValue();
-//                    System.out.println(STR."\{method.methodName().stringValue()} \{descriptor}");
-//                }
-//                return classFileBuffer;
-//            }
-//        });
-
 //         adds line coverage tracker
         inst.addTransformer(new ClassFileTransformer() {
             @Override
