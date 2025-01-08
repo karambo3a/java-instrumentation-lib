@@ -63,7 +63,11 @@ public interface CoverageTracker {
         System.out.println(STR."=== \{name} ===");
         System.out.println(STR."Visited: \{visited}");
         System.out.println(STR."All: \{all}");
-        System.out.println(STR."\{String.format("%.4f", (double) visited / all * 100)}%");
+        if (all != 0) {
+            System.out.println(STR."\{String.format("%.4f", (double) visited / all * 100)}%");
+        } else {
+            System.out.println("0.0000%");
+        }
         System.out.println("===");
         System.out.println();
     }
