@@ -39,7 +39,7 @@ public class BranchAgent {
                 classNumber++;
                 BranchCoverageTracker.classes.add(className);
                 BranchCoverageTracker.methods.add(new ArrayList<>());
-                ClassTransform classTransform = new ClassTransformStateful(classNumber);
+                ClassTransform classTransform = new ClassTransformStateful(classNumber, className);
 
                 var oldClassFile = ClassFile.of().parse(classFileBuffer);
                 var newClassFile = ClassFile.of().transform(oldClassFile, classTransform);
@@ -61,16 +61,18 @@ public class BranchAgent {
     private static class ClassTransformStateful implements ClassTransform {
         private final int classNumber;
         private int methodNumber = 0;
+        private final String className;
 
-        public ClassTransformStateful(Integer classCnt) {
+        public ClassTransformStateful(Integer classCnt, String className) {
             this.classNumber = classCnt;
+            this.className = className;
         }
 
         @Override
         public void accept(ClassBuilder builder, ClassElement element) {
             if (element instanceof MethodModel methodModel) {
                 ++methodNumber;
-                BranchCoverageTracker.methods.get(classNumber - 1).add(methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
+                BranchCoverageTracker.methods.get(classNumber - 1).add(this.className + '.' + methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
                 builder.transformMethod(methodModel, new MethodTransformStateful(methodModel, methodNumber, classNumber));
             } else {
                 builder.with(element);

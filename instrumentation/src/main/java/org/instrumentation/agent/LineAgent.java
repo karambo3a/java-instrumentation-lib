@@ -34,7 +34,7 @@ public class LineAgent {
                 classNumber++;
                 LineCoverageTracker.classes.add(className);
                 LineCoverageTracker.methods.add(new ArrayList<>());
-                ClassTransform classTransform = new ClassTransformStateful(classNumber);
+                ClassTransform classTransform = new ClassTransformStateful(classNumber, className);
 
                 var oldClassFile = ClassFile.of().parse(classFileBuffer);
                 var newClassFile = ClassFile.of().transform(oldClassFile, classTransform);
@@ -56,20 +56,22 @@ public class LineAgent {
     private static class ClassTransformStateful implements ClassTransform {
         private int methodNumber = 0;
         private final int classNumber;
+        private final String className;
 
-        public ClassTransformStateful(Integer classCnt) {
+        public ClassTransformStateful(Integer classCnt, String className) {
             this.classNumber = classCnt;
+            this.className = className;
         }
 
         @Override
         public void accept(ClassBuilder builder, ClassElement element) {
-                if (element instanceof MethodModel methodModel) {
-                    methodNumber++;
-                    LineCoverageTracker.methods.get(classNumber - 1).add(methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
-                    builder.transformMethod(methodModel, createMethodTransform());
-                } else {
-                    builder.with(element);
-                }
+            if (element instanceof MethodModel methodModel) {
+                methodNumber++;
+                LineCoverageTracker.methods.get(classNumber - 1).add(this.className + '.' + methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
+                builder.transformMethod(methodModel, createMethodTransform());
+            } else {
+                builder.with(element);
+            }
         }
 
         private MethodTransform createMethodTransform() {

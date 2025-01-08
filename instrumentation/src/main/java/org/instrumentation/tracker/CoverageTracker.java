@@ -27,14 +27,14 @@ public interface CoverageTracker {
         long visited = 0;
         for (var cov : coverage) {
             var data = uncode(cov);
-            if (methods.get(data[0] - 1).get(data[1] - 1).contains(methodName)) {
+            if (methods.get(data[0] - 1).get(data[1] - 1).equals(methodName)) {
                 ++visited;
             }
         }
         long all = 0;
         for (var cov : allCoverage) {
             var data = uncode(cov);
-            if (methods.get(data[0] - 1).get(data[1] - 1).contains(methodName)) {
+            if (methods.get(data[0] - 1).get(data[1] - 1).equals(methodName)) {
                 ++all;
             }
         }
