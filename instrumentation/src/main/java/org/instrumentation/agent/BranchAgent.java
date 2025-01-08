@@ -1,6 +1,7 @@
 package org.instrumentation.agent;
 
 import org.instrumentation.tracker.BranchCoverageTracker;
+import org.instrumentation.tracker.CoverageTracker;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -112,13 +113,13 @@ public class BranchAgent {
             if (element instanceof TableSwitchInstruction instruction) {
                 ++branchNumber;
                 createTableSwitch(instruction);
-                Long code = BranchCoverageTracker.codeBranch(classNumber, methodNumber, branchNumber);
+                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                 BranchCoverageTracker.logAllBranch(code);
             }
             if (element instanceof LookupSwitchInstruction instruction) {
                 ++branchNumber;
                 createLookUpTable(instruction);
-                Long code = BranchCoverageTracker.codeBranch(classNumber, methodNumber, branchNumber);
+                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                 BranchCoverageTracker.logAllBranch(code);
             }
 
@@ -132,7 +133,7 @@ public class BranchAgent {
                     lines = lookUpSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().get();
                 }
                 if (lines != null) {
-                    Long code = BranchCoverageTracker.codeBranch(classNumber, methodNumber, branchNumber);
+                    Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                     builder.ldc(code.toString())
                             .invokestatic(
                                     ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
@@ -144,7 +145,7 @@ public class BranchAgent {
 
             if (element instanceof BranchInstruction elem && (elem.opcode() != Opcode.GOTO && elem.opcode() != Opcode.GOTO_W)) {
                 ++branchNumber;
-                Long code = BranchCoverageTracker.codeBranch(classNumber, methodNumber, branchNumber);
+                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                 builder.ldc(code.toString())
                         .invokestatic(
                                 ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),

@@ -1,5 +1,6 @@
 package org.instrumentation.agent;
 
+import org.instrumentation.tracker.CoverageTracker;
 import org.instrumentation.tracker.LineCoverageTracker;
 
 import java.io.BufferedOutputStream;
@@ -84,7 +85,7 @@ public class LineAgent {
         private CodeTransform createCodeTransform() {
             return (builder, element) -> {
                 if (element instanceof LineNumber i) {
-                    Long code = LineCoverageTracker.codeLine(classNumber, methodNumber, i.line());
+                    Long code = CoverageTracker.code(classNumber, methodNumber, i.line());
                     builder.ldc(code.toString())
                             .invokestatic(
                                     ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
