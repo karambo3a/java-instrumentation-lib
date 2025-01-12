@@ -8,10 +8,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
-import java.lang.classfile.instruction.BranchInstruction;
-import java.lang.classfile.instruction.LookupSwitchInstruction;
-import java.lang.classfile.instruction.TableSwitchInstruction;
+import java.lang.classfile.instruction.*;
 import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDesc;
 import java.lang.constant.MethodTypeDesc;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -101,6 +100,8 @@ public class BranchAgent {
         private List<Integer[]> lookUpSwitch = new ArrayList<>();
         private int branchNumber = 0;
         private int lineNumber = 0;
+        private Instruction first = null;
+        private Instruction second = null;
 
 
         public CodeTransformStateful(CodeAttribute codeModel, Integer methodCnt, Integer classCnt) {
@@ -112,17 +113,20 @@ public class BranchAgent {
 
         @Override
         public void accept(CodeBuilder builder, CodeElement element) {
-            if (element instanceof TableSwitchInstruction instruction) {
+            if (element instanceof TableSwitchInstruction || element instanceof LookupSwitchInstruction) {
                 ++branchNumber;
-                createTableSwitch(instruction);
+                List<ConstantDesc> switchConstants;
+                if (element instanceof TableSwitchInstruction instruction) {
+                    createSwitchTable(instruction);
+                    switchConstants = instruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+                } else {
+                    LookupSwitchInstruction instruction = (LookupSwitchInstruction) element;
+                    createLookUpTable(instruction);
+                    switchConstants = instruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+                }
                 Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                 BranchCoverageTracker.logAllBranch(code);
-            }
-            if (element instanceof LookupSwitchInstruction instruction) {
-                ++branchNumber;
-                createLookUpTable(instruction);
-                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
-                BranchCoverageTracker.logAllBranch(code);
+                BranchCoverageTracker.branchConstants.put(code, switchConstants);
             }
 
             builder.with(element);
@@ -155,14 +159,17 @@ public class BranchAgent {
                                 MethodTypeDesc.ofDescriptor("(Ljava/lang/String;)V")
                         );
                 BranchCoverageTracker.logAllBranch(code);
+                saveBranchConstant(elem, code);
             }
 
             if (element instanceof Instruction elem) {
                 lineNumber += elem.sizeInBytes();
+                first = second;
+                second = elem;
             }
         }
 
-        private void createTableSwitch(TableSwitchInstruction instruction) {
+        private void createSwitchTable(TableSwitchInstruction instruction) {
             tableSwitch = instruction.cases().stream().map(i ->
                     new Integer[]{branchNumber, codeModel.labelToBci(i.target())}
             ).collect(Collectors.toList());
@@ -172,6 +179,18 @@ public class BranchAgent {
             lookUpSwitch = instruction.cases().stream().map(i ->
                     new Integer[]{branchNumber, codeModel.labelToBci(i.target())}
             ).collect(Collectors.toList());
+        }
+
+        private void saveBranchConstant(BranchInstruction instruction, Long code) {
+            if (Set.of(Opcode.IFEQ, Opcode.IFGE, Opcode.IFGT, Opcode.IFLE, Opcode.IFLT, Opcode.IFNE).contains(instruction.opcode())) {
+                if (second instanceof LoadInstruction) {
+                    BranchCoverageTracker.branchConstants.put(code, List.of(0));
+                }
+            } else if (first instanceof ConstantInstruction f) {
+                BranchCoverageTracker.branchConstants.put(code, List.of(f.constantValue()));
+            } else if (second instanceof ConstantInstruction s) {
+                BranchCoverageTracker.branchConstants.put(code, List.of(s.constantValue()));
+            }
         }
     }
 }

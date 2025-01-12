@@ -1,13 +1,12 @@
 package org.instrumentation.tracker;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.constant.ConstantDesc;
+import java.util.*;
 
 public class BranchCoverageTracker {
     public static final Set<Long> branchCoverage = new TreeSet<>();
     public static final Set<Long> allBranch = new TreeSet<>();
+    public static final Map<Long, List<ConstantDesc>> branchConstants = new HashMap<>();
     public static final List<String> classes = new ArrayList<>();
     public static final List<List<String>> methods = new ArrayList<>();
 
