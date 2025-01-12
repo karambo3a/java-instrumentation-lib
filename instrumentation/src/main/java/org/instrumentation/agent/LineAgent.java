@@ -14,23 +14,26 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 
 public class LineAgent {
     private static Integer classNumber = 0;
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        Set<String> classes = Set.of(agentArgs.split(","));
+        List<String> args = List.of(agentArgs.split(","));
+        if (args.getFirst().contains("true")) {
+            LineCoverageTracker.isUnique = true;
+        }
 
 //         adds line coverage tracker
         inst.addTransformer(new ClassFileTransformer() {
             @Override
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-                if (!classes.contains(className)) {
+
+                if (!args.contains(className)) {
                     return classFileBuffer;
                 }
-
                 classNumber++;
                 LineCoverageTracker.classes.add(className);
                 LineCoverageTracker.methods.add(new ArrayList<>());

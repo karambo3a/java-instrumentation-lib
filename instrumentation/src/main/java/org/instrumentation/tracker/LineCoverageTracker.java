@@ -6,13 +6,19 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class LineCoverageTracker {
-    public static final Set<Long> lineCoverage = new TreeSet<>();
+    public static final Set<Long> uniqueLineCoverage = new TreeSet<>();
+    public static final List<Long> notUniqueLineCoverage = new ArrayList<>();
     public static final Set<Long> allLine = new TreeSet<>();
     public static final List<String> classes = new ArrayList<>();
     public static final List<List<String>> methods = new ArrayList<>();
+    public static boolean isUnique = false;
 
     public static void logCoverage(String lineCode) {
-        lineCoverage.add(Long.valueOf(lineCode));
+        if (isUnique) {
+            uniqueLineCoverage.add(Long.valueOf(lineCode));
+        } else {
+            notUniqueLineCoverage.add(Long.valueOf(lineCode));
+        }
     }
 
     public static void logAllLine(Long lineCode) {
@@ -20,11 +26,19 @@ public class LineCoverageTracker {
     }
 
     static public void getMethodStat(String methodName) {
-        CoverageTracker.getMethodStat(methodName, lineCoverage, allLine, methods);
+        if (isUnique) {
+            CoverageTracker.getMethodStat(methodName, uniqueLineCoverage, allLine, methods);
+        } else {
+            CoverageTracker.getMethodStat(methodName, notUniqueLineCoverage, allLine, methods);
+        }
     }
 
     static public void getClassStat(String className) {
-        CoverageTracker.getClassStat(className, lineCoverage, allLine, classes);
+        if (isUnique) {
+            CoverageTracker.getClassStat(className, uniqueLineCoverage, allLine, classes);
+        } else {
+            CoverageTracker.getClassStat(className, notUniqueLineCoverage, allLine, classes);
+        }
     }
 
 }
