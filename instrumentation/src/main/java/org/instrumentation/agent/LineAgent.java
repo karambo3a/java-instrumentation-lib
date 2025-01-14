@@ -15,14 +15,25 @@ import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LineAgent {
+    private static List<String> args = List.of();
+    private static Pattern pattern = null;
     private static Integer classNumber = 0;
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        List<String> args = List.of(agentArgs.split(","));
-        if (args.getFirst().contains("true")) {
-            LineCoverageTracker.isUnique = true;
+        if (agentArgs != null) {
+            args = List.of(agentArgs.split(","));
+            if (args.size() < 3) {
+                return;
+            }
+            if (args.getFirst().contains("=true")) {
+                LineCoverageTracker.isUnique = true;
+            }
+            if (args.get(1).contains("=true")) {
+                pattern = Pattern.compile(args.get(2));
+            }
         }
 
 //         adds line coverage tracker
@@ -31,9 +42,16 @@ public class LineAgent {
             public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain, byte[] classFileBuffer) {
 
-                if (!args.contains(className)) {
+                if (args.isEmpty()) {
                     return classFileBuffer;
                 }
+                if (pattern == null && !args.contains(className)) {
+                    return classFileBuffer;
+                }
+                if (pattern != null && !pattern.matcher(className).matches()) {
+                    return classFileBuffer;
+                }
+
                 classNumber++;
                 LineCoverageTracker.classes.add(className);
                 LineCoverageTracker.methods.add(new ArrayList<>());
