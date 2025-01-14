@@ -12,15 +12,15 @@ public class BranchCoverageTracker {
     public static final List<List<String>> methods = new ArrayList<>();
     public static boolean isUnique = false;
 
-    public static void logCoverage(String branchNumber) {
+    public static void logCoverage(long branchNumber) {
         if (isUnique) {
-            uniqueBranchCoverage.add(Long.valueOf(branchNumber));
+            uniqueBranchCoverage.add(branchNumber);
         } else {
-            notUniqueBranchCoverage.add(Long.valueOf(branchNumber));
+            notUniqueBranchCoverage.add(branchNumber);
         }
     }
 
-    public static void logAllBranch(Long branchNumber) {
+    public static void logAllBranch(long branchNumber) {
         allBranch.add(branchNumber);
     }
 

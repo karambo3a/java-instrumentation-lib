@@ -108,12 +108,12 @@ public class LineAgent {
         private CodeTransform createCodeTransform() {
             return (builder, element) -> {
                 if (element instanceof LineNumber i) {
-                    Long code = CoverageTracker.code(classNumber, methodNumber, i.line());
-                    builder.ldc(code.toString())
+                    long code = CoverageTracker.code(classNumber, methodNumber, i.line());
+                    builder.ldc(code)
                             .invokestatic(
                                     ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
                                     "logCoverage",
-                                    MethodTypeDesc.ofDescriptor("(Ljava/lang/String;)V")
+                                    MethodTypeDesc.ofDescriptor("(J)V")
                             );
                     LineCoverageTracker.logAllLine(code);
                 }

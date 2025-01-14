@@ -145,7 +145,7 @@ public class BranchAgent {
                     createLookUpTable(instruction);
                     switchConstants = instruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
                 }
-                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
+                long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
                 BranchCoverageTracker.logAllBranch(code);
                 BranchCoverageTracker.branchConstants.put(code, switchConstants);
             }
@@ -160,24 +160,24 @@ public class BranchAgent {
                     lines = lookUpSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().get();
                 }
                 if (lines != null) {
-                    Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
-                    builder.ldc(code.toString())
+                    long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
+                    builder.ldc(code)
                             .invokestatic(
                                     ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
                                     "logCoverage",
-                                    MethodTypeDesc.ofDescriptor("(Ljava/lang/String;)V")
+                                    MethodTypeDesc.ofDescriptor("(J)V")
                             );
                 }
             }
 
             if (element instanceof BranchInstruction elem && (elem.opcode() != Opcode.GOTO && elem.opcode() != Opcode.GOTO_W)) {
                 ++branchNumber;
-                Long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
-                builder.ldc(code.toString())
+                long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
+                builder.ldc(code)
                         .invokestatic(
                                 ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
                                 "logCoverage",
-                                MethodTypeDesc.ofDescriptor("(Ljava/lang/String;)V")
+                                MethodTypeDesc.ofDescriptor("(J)V")
                         );
                 BranchCoverageTracker.logAllBranch(code);
                 saveBranchConstant(elem, code);

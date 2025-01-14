@@ -13,15 +13,15 @@ public class LineCoverageTracker {
     public static final List<List<String>> methods = new ArrayList<>();
     public static boolean isUnique = false;
 
-    public static void logCoverage(String lineCode) {
+    public static void logCoverage(long lineCode) {
         if (isUnique) {
-            uniqueLineCoverage.add(Long.valueOf(lineCode));
+            uniqueLineCoverage.add(lineCode);
         } else {
-            notUniqueLineCoverage.add(Long.valueOf(lineCode));
+            notUniqueLineCoverage.add(lineCode);
         }
     }
 
-    public static void logAllLine(Long lineCode) {
+    public static void logAllLine(long lineCode) {
         allLine.add(lineCode);
     }
 
