@@ -49,6 +49,7 @@ tasks.register('runWithAgents', JavaExec) {
         ]
     }
 }
+// -javaagent:=isUnique=true,isRegex=true,^lesson
 
 tasks.register('runWithLineAgent', JavaExec) {
 
