@@ -38,7 +38,7 @@ public interface CoverageTracker {
                 ++all;
             }
         }
-        printStat(methodName, visited, all);
+        getStat(methodName, visited, all);
     }
 
     static void getClassStat(String className, Iterable<Long> coverage, Iterable<Long> allCoverage, List<String> classes) {
@@ -56,10 +56,10 @@ public interface CoverageTracker {
                 ++all;
             }
         }
-        printStat(className, visited, all);
+        getStat(className, visited, all);
     }
 
-    private static void printStat(String name, Long visited, Long all) {
+    static void getStat(String name, Long visited, Long all) {
         System.out.println(STR."=== \{name} ===");
         System.out.println(STR."Visited: \{visited}");
         System.out.println(STR."All: \{all}");

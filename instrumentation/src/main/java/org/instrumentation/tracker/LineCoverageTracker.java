@@ -1,14 +1,11 @@
 package org.instrumentation.tracker;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class LineCoverageTracker {
-    public static final Set<Long> uniqueLineCoverage = new TreeSet<>();
+    public static final Set<Long> uniqueLineCoverage = new HashSet<>();
     public static final List<Long> notUniqueLineCoverage = new ArrayList<>();
-    public static final Set<Long> allLine = new TreeSet<>();
+    public static final Set<Long> allLine = new HashSet<>();
     public static final List<String> classes = new ArrayList<>();
     public static final List<List<String>> methods = new ArrayList<>();
     public static boolean isUnique = false;
@@ -38,6 +35,14 @@ public class LineCoverageTracker {
             CoverageTracker.getClassStat(className, uniqueLineCoverage, allLine, classes);
         } else {
             CoverageTracker.getClassStat(className, notUniqueLineCoverage, allLine, classes);
+        }
+    }
+
+    static public void getStat() {
+        if (isUnique) {
+            CoverageTracker.getStat("", (long) uniqueLineCoverage.size(), (long) allLine.size());
+        } else {
+            CoverageTracker.getStat("", (long) notUniqueLineCoverage.size(), (long) allLine.size());
         }
     }
 

@@ -4,9 +4,9 @@ import java.lang.constant.ConstantDesc;
 import java.util.*;
 
 public class BranchCoverageTracker {
-    public static final Set<Long> uniqueBranchCoverage = new TreeSet<>();
+    public static final Set<Long> uniqueBranchCoverage = new HashSet<>();
     public static final List<Long> notUniqueBranchCoverage = new ArrayList<>();
-    public static final Set<Long> allBranch = new TreeSet<>();
+    public static final Set<Long> allBranch = new HashSet<>();
     public static final Map<Long, List<ConstantDesc>> branchConstants = new HashMap<>();
     public static final List<String> classes = new ArrayList<>();
     public static final List<List<String>> methods = new ArrayList<>();
@@ -37,6 +37,14 @@ public class BranchCoverageTracker {
             CoverageTracker.getClassStat(className, uniqueBranchCoverage, allBranch, classes);
         } else {
             CoverageTracker.getClassStat(className, notUniqueBranchCoverage, allBranch, classes);
+        }
+    }
+
+    static public void getStat() {
+        if (isUnique) {
+            CoverageTracker.getStat("", (long) uniqueBranchCoverage.size(), (long) allBranch.size());
+        } else {
+            CoverageTracker.getStat("", (long) notUniqueBranchCoverage.size(), (long) allBranch.size());
         }
     }
 
