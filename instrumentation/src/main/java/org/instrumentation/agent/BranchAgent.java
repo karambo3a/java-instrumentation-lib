@@ -121,6 +121,7 @@ public class BranchAgent {
         private List<Integer[]> lookUpSwitch = new ArrayList<>();
         private int branchNumber = 0;
         private int lineNumber = 0;
+        private int arrayNumber = 0;
         private Instruction first = null;
         private Instruction second = null;
 
@@ -152,7 +153,7 @@ public class BranchAgent {
 
             builder.with(element);
 
-            if (element instanceof Instruction) {
+            if (element instanceof Instruction elem) {
                 Integer[] lines = null;
                 if (tableSwitch.stream().anyMatch(l -> l[1] == lineNumber)) {
                     lines = tableSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().get();
@@ -168,6 +169,7 @@ public class BranchAgent {
                                     MethodTypeDesc.ofDescriptor("(J)V")
                             );
                 }
+                saveArrayIndecies(elem);
             }
 
             if (element instanceof BranchInstruction elem && (elem.opcode() != Opcode.GOTO && elem.opcode() != Opcode.GOTO_W)) {
@@ -211,6 +213,16 @@ public class BranchAgent {
                 BranchCoverageTracker.branchConstants.put(code, List.of(f.constantValue()));
             } else if (second instanceof ConstantInstruction s) {
                 BranchCoverageTracker.branchConstants.put(code, List.of(s.constantValue()));
+            }
+        }
+
+        private void saveArrayIndecies(Instruction instruction) {
+            ++arrayNumber;
+            long code = CoverageTracker.code(classNumber, methodNumber, arrayNumber);
+            if (instruction instanceof ArrayLoadInstruction && second instanceof ConstantInstruction s) {
+                BranchCoverageTracker.arrayIndices.put(code, List.of(s.constantValue()));
+            } else if (instruction instanceof ArrayStoreInstruction && first instanceof ConstantInstruction f) {
+                BranchCoverageTracker.arrayIndices.put(code, List.of(f.constantValue()));
             }
         }
     }

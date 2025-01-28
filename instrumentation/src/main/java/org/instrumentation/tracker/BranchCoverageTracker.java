@@ -8,6 +8,7 @@ public class BranchCoverageTracker {
     public static final List<Long> notUniqueBranchCoverage = new ArrayList<>();
     public static final Set<Long> allBranch = new HashSet<>();
     public static final Map<Long, List<ConstantDesc>> branchConstants = new HashMap<>();
+    public static final Map<Long, List<ConstantDesc>> arrayIndices = new TreeMap<>();
     public static final List<String> classes = new ArrayList<>();
     public static final List<List<String>> methods = new ArrayList<>();
     public static boolean isUnique = false;

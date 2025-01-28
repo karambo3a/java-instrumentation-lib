@@ -63,7 +63,7 @@ tasks.register('runWithLineAgent', JavaExec) {
     doFirst {
         def lineAgentJar = project(':instrumentation').tasks.lineAgentJar.outputs.files.singleFile
         jvmArgs += [
-                '-javaagent:' + lineAgentJar + '=org/example/Example,org/example/Example2',
+                '-javaagent:' + lineAgentJar + '=isUnique=true,isRegex=true,org\\/example\\/[^\\/]+',
                 '--enable-preview'
         ]
     }
@@ -81,7 +81,7 @@ tasks.register('runWithBranchAgent', JavaExec) {
     doFirst {
         def branchAgentJar = project(':instrumentation').tasks.branchAgentJar.outputs.files.singleFile
         jvmArgs += [
-                '-javaagent:' + branchAgentJar + '=org/example/Example,org/example/Example2',
+                '-javaagent:' + branchAgentJar + '=isUnique=false,isRegex=false,org/example/Example,org/example/Example2',
                 '--enable-preview'
         ]
     }
