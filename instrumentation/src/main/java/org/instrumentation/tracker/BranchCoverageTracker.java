@@ -47,4 +47,43 @@ public class BranchCoverageTracker {
         }
     }
 
+    public static Set<Long> getUniqueBranchCoverage() {
+        return uniqueBranchCoverage;
+    }
+
+    public static List<Long> getNotUniqueBranchCoverage() {
+        return notUniqueBranchCoverage;
+    }
+
+    public static Set<Long> getAllBranch() {
+        return allBranch;
+    }
+
+    public static List<String> getClasses() {
+        return classes;
+    }
+
+    public static void addClass(String className) {
+        classes.add(className);
+    }
+
+    public static List<List<MethodInfo>> getMethods() {
+        return methods;
+    }
+
+    public static void addMethod(MethodInfo methodInfo) {
+        methods.getLast().add(methodInfo);
+    }
+
+    public static void setIsUnique(boolean unique) {
+        isUnique = unique;
+    }
+
+    public static long getPrev() {
+        return prev;
+    }
+
+    public static void setPrev(long value) {
+        prev = value;
+    }
 }

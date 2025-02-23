@@ -93,29 +93,27 @@ public class ConstantAgent implements Agent {
                 switch (element) {
                     case TableSwitchInstruction tableSwitchInstruction -> {
                         ++branchNumber;
-                        ConstantTracker.branchConstants.put(
-                                InstrEncoder.encode(classNumber, methodNumber, branchNumber),
-                                tableSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList()
-                        );
+                        long code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
+                        List<ConstantDesc> constants = tableSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+                        ConstantTracker.addBranchConstants(code, constants);
                     }
                     case LookupSwitchInstruction lookupSwitchInstruction -> {
                         ++branchNumber;
-                        ConstantTracker.branchConstants.put(
-                                InstrEncoder.encode(classNumber, methodNumber, branchNumber),
-                                lookupSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList()
-                        );
+                        long code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
+                        List<ConstantDesc> constants = lookupSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+                        ConstantTracker.addBranchConstants(code, constants);
                     }
                     case BranchInstruction branchInstruction when (branchInstruction.opcode() != Opcode.GOTO && branchInstruction.opcode() != Opcode.GOTO_W) -> {
                         ++branchNumber;
                         var code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
                         if (Set.of(Opcode.IFEQ, Opcode.IFGE, Opcode.IFGT, Opcode.IFLE, Opcode.IFLT, Opcode.IFNE).contains(elem.opcode())) {
                             if (second instanceof LoadInstruction) {
-                                ConstantTracker.branchConstants.put(code, List.of(0));
+                                ConstantTracker.addBranchConstants(code, List.of(0));
                             }
                         } else if (first instanceof ConstantInstruction f) {
-                            ConstantTracker.branchConstants.put(code, List.of(f.constantValue()));
+                            ConstantTracker.addBranchConstants(code, List.of(f.constantValue()));
                         } else if (second instanceof ConstantInstruction s) {
-                            ConstantTracker.branchConstants.put(code, List.of(s.constantValue()));
+                            ConstantTracker.addBranchConstants(code, List.of(s.constantValue()));
                         }
                     }
                     default -> {

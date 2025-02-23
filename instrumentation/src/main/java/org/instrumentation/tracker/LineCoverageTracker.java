@@ -49,4 +49,44 @@ public class LineCoverageTracker {
         }
     }
 
+    public static Set<Long> getUniqueLineCoverage() {
+        return uniqueLineCoverage;
+    }
+
+    public static List<Long> getNotUniqueLineCoverage() {
+        return notUniqueLineCoverage;
+    }
+
+    public static Set<Long> getAllLine() {
+        return allLine;
+    }
+
+    public static List<String> getClasses() {
+        return classes;
+    }
+
+    public static void addClass(String className) {
+        classes.add(className);
+    }
+
+
+    public static List<List<MethodInfo>> getMethods() {
+        return methods;
+    }
+
+    public static void addMethod(MethodInfo methodInfo) {
+        methods.getLast().add(methodInfo);
+    }
+
+    public static void setIsUnique(boolean unique) {
+        isUnique = unique;
+    }
+
+    public static long getPrev() {
+        return prev;
+    }
+
+    public static void setPrev(long value) {
+        prev = value;
+    }
 }

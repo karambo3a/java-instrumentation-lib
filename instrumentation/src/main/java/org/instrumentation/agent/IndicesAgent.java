@@ -91,9 +91,9 @@ public class IndicesAgent implements Agent {
                 ++arrayNumber;
                 long code = InstrEncoder.encode(classNumber, methodNumber, arrayNumber);
                 if (instruction instanceof ArrayLoadInstruction && second instanceof ConstantInstruction s) {
-                    IndicesTracker.arrayIndices.put(code, List.of(s.constantValue()));
+                    IndicesTracker.addArrayIndices(code, List.of(s.constantValue()));
                 } else if (instruction instanceof ArrayStoreInstruction && first instanceof ConstantInstruction f) {
-                    IndicesTracker.arrayIndices.put(code, List.of(f.constantValue()));
+                    IndicesTracker.addArrayIndices(code, List.of(f.constantValue()));
                 }
 
                 first = second;

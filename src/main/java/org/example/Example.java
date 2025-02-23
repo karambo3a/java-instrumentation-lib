@@ -233,8 +233,8 @@ public class Example {
         BranchCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "nestedIfElseLoop", "(I)V"));
         BranchCoverageTracker.getStat();
         System.out.println(LineCoverageTracker.getUniqueLineCoverage());
-        System.out.println(IndicesTracker.arrayIndices);
-        System.out.println(new TreeMap<>(ConstantTracker.branchConstants));
+        System.out.println(IndicesTracker.getArrayIndices());
+        System.out.println(new TreeMap<>(ConstantTracker.getBranchConstants()));
         System.out.println(BranchCoverageTracker.getUniqueBranchCoverage());
     }
 }
