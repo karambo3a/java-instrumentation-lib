@@ -27,8 +27,8 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add("-Xlint:preview")
 }
 
-tasks.register('lineAgentJar', Jar) {
-    archiveBaseName = 'line-coverage-agent'
+tasks.register('agentJar', Jar) {
+    archiveBaseName = 'coverage-agent'
     archiveClassifier = 'agent'
 
     from sourceSets.main.output
@@ -39,29 +39,7 @@ tasks.register('lineAgentJar', Jar) {
 
     manifest {
         attributes(
-                'Premain-Class': 'org.instrumentation.agent.LineAgent',
-                'Can-Redefine-Classes': 'true',
-                'Can-Retransform-Classes': 'true'
-        )
-    }
-
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-}
-
-
-tasks.register('branchAgentJar', Jar) {
-    archiveBaseName = 'branch-coverage-agent'
-    archiveClassifier = 'agent'
-
-    from sourceSets.main.output
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    manifest {
-        attributes(
-                'Premain-Class': 'org.instrumentation.agent.BranchAgent',
+                'Premain-Class': 'org.instrumentation.Main',
                 'Can-Redefine-Classes': 'true',
                 'Can-Retransform-Classes': 'true'
         )

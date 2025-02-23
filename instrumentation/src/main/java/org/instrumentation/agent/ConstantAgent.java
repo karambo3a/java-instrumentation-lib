@@ -1,18 +1,16 @@
 package org.instrumentation.agent;
 
+import org.instrumentation.tracker.ConstantTracker;
 import org.instrumentation.tracker.InstrEncoder;
-import org.instrumentation.tracker.LineCoverageTracker;
-import org.instrumentation.tracker.MethodInfo;
 
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
-import java.lang.classfile.instruction.LineNumber;
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
-import java.util.ArrayList;
+import java.lang.classfile.instruction.*;
+import java.lang.constant.ConstantDesc;
+import java.util.List;
+import java.util.Set;
 
-public class LineAgent implements Agent {
+public class ConstantAgent implements Agent {
     @Override
     public ClassTransform createClassTransform(String className, long classNumber) {
         class ClassTransformStateful implements ClassTransform {
@@ -23,9 +21,6 @@ public class LineAgent implements Agent {
             public ClassTransformStateful(String className, long classNumber) {
                 this.className = className;
                 this.classNumber = classNumber;
-
-                LineCoverageTracker.addClass(className);
-                LineCoverageTracker.getMethods().add(new ArrayList<>());
             }
 
             @Override
@@ -53,8 +48,6 @@ public class LineAgent implements Agent {
                 this.classNumber = classNumber;
                 this.methodModel = methodModel;
                 this.methodNumber = methodNumber;
-
-                LineCoverageTracker.addMethod(new MethodInfo(className, methodModel.methodName().stringValue(), methodModel.methodType().stringValue()));
             }
 
             @Override
@@ -77,6 +70,10 @@ public class LineAgent implements Agent {
             private final MethodModel methodModel;
             private final long methodNumber;
             private final CodeAttribute codeAttribute;
+            private int branchNumber = 0;
+            private Instruction first = null;
+            private Instruction second = null;
+
 
             public CodeTransformStateful(String className, long classNumber, MethodModel methodModel, long methodNumber, CodeAttribute codeAttribute) {
                 this.className = className;
@@ -86,27 +83,47 @@ public class LineAgent implements Agent {
                 this.codeAttribute = codeAttribute;
             }
 
-            @Override
             public void accept(CodeBuilder builder, CodeElement element) {
-                if (element instanceof LineNumber i) {
-                    long code = InstrEncoder.encode(classNumber, methodNumber, i.line());
-                    builder.
-                            invokestatic(ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"), "getPrev", MethodTypeDesc.ofDescriptor("()J")).
-                            ldc(code).
-                            lcmp();
-                    Label skipLabel = builder.newLabel();
-                    builder.ifeq(skipLabel).
-                            ldc(code)
-                            .invokestatic(
-                                    ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
-                                    "logCoverage",
-                                    MethodTypeDesc.ofDescriptor("(J)V")
-                            );
-                    builder.labelBinding(skipLabel);
-                    LineCoverageTracker.logAllLine(code);
-                    LineCoverageTracker.setPrev(code);
-                }
                 builder.with(element);
+
+                if (!(element instanceof Instruction elem)) {
+                    return;
+                }
+
+                switch (element) {
+                    case TableSwitchInstruction tableSwitchInstruction -> {
+                        ++branchNumber;
+                        ConstantTracker.branchConstants.put(
+                                InstrEncoder.encode(classNumber, methodNumber, branchNumber),
+                                tableSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList()
+                        );
+                    }
+                    case LookupSwitchInstruction lookupSwitchInstruction -> {
+                        ++branchNumber;
+                        ConstantTracker.branchConstants.put(
+                                InstrEncoder.encode(classNumber, methodNumber, branchNumber),
+                                lookupSwitchInstruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList()
+                        );
+                    }
+                    case BranchInstruction branchInstruction when (branchInstruction.opcode() != Opcode.GOTO && branchInstruction.opcode() != Opcode.GOTO_W) -> {
+                        ++branchNumber;
+                        var code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
+                        if (Set.of(Opcode.IFEQ, Opcode.IFGE, Opcode.IFGT, Opcode.IFLE, Opcode.IFLT, Opcode.IFNE).contains(elem.opcode())) {
+                            if (second instanceof LoadInstruction) {
+                                ConstantTracker.branchConstants.put(code, List.of(0));
+                            }
+                        } else if (first instanceof ConstantInstruction f) {
+                            ConstantTracker.branchConstants.put(code, List.of(f.constantValue()));
+                        } else if (second instanceof ConstantInstruction s) {
+                            ConstantTracker.branchConstants.put(code, List.of(s.constantValue()));
+                        }
+                    }
+                    default -> {
+                    }
+                }
+
+                first = second;
+                second = elem;
             }
         }
         return new CodeTransformStateful(className, classNumber, methodModel, methodNumber, codeAttribute);

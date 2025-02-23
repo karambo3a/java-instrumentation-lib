@@ -1,17 +1,15 @@
 package org.instrumentation.tracker;
 
-import java.lang.constant.ConstantDesc;
 import java.util.*;
 
 public class BranchCoverageTracker {
-    public static final Set<Long> uniqueBranchCoverage = new HashSet<>();
-    public static final List<Long> notUniqueBranchCoverage = new ArrayList<>();
-    public static final Set<Long> allBranch = new HashSet<>();
-    public static final Map<Long, List<ConstantDesc>> branchConstants = new HashMap<>();
-    public static final Map<Long, List<ConstantDesc>> arrayIndices = new TreeMap<>();
-    public static final List<String> classes = new ArrayList<>();
-    public static final List<List<String>> methods = new ArrayList<>();
-    public static boolean isUnique = false;
+    private static final Set<Long> uniqueBranchCoverage = new HashSet<>();
+    private static final List<Long> notUniqueBranchCoverage = new ArrayList<>();
+    private static final Set<Long> allBranch = new HashSet<>();
+    private static final List<String> classes = new ArrayList<>();
+    private static final List<List<MethodInfo>> methods = new ArrayList<>();
+    private static boolean isUnique = false;
+    private static long prev = 0;
 
     public static void logCoverage(long branchNumber) {
         if (isUnique) {
@@ -25,11 +23,11 @@ public class BranchCoverageTracker {
         allBranch.add(branchNumber);
     }
 
-    static public void getMethodStat(String methodName) {
+    static public void getMethodStat(MethodInfo methodInfo) {
         if (isUnique) {
-            CoverageTracker.getMethodStat(methodName, uniqueBranchCoverage, allBranch, methods);
+            CoverageTracker.getMethodStat(methodInfo, uniqueBranchCoverage, allBranch, methods);
         } else {
-            CoverageTracker.getMethodStat(methodName, notUniqueBranchCoverage, allBranch, methods);
+            CoverageTracker.getMethodStat(methodInfo, notUniqueBranchCoverage, allBranch, methods);
         }
     }
 

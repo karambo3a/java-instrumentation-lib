@@ -2,9 +2,7 @@ package org.example;
 
 import org.instrumentation.tracker.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 public class Example {
@@ -200,7 +198,7 @@ public class Example {
 
 
 
-    public static void main() {
+    public static void main(String[] args) {
         System.out.println("---");
         System.out.println("Main output\n");
         System.out.println(getNumber1(1, 2L));
@@ -226,16 +224,18 @@ public class Example {
         System.out.println("---");
         System.out.println("Line Coverage\n");
         LineCoverageTracker.getClassStat("org/example/Example");
-        LineCoverageTracker.getMethodStat("org/example/Example.nestedIfElseLoop(I)V");
-        LineCoverageTracker.getMethodStat("org/example/Example.of()V");
+        LineCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "nestedIfElseLoop", "(I)V"));
+        LineCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "of", "()V"));
         LineCoverageTracker.getStat();
         System.out.println("---");
         System.out.println("Branch Coverage\n");
         BranchCoverageTracker.getClassStat("org/example/Example");
-        BranchCoverageTracker.getMethodStat("org/example/Example.nestedIfElseLoop(I)V");
+        BranchCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "nestedIfElseLoop", "(I)V"));
         BranchCoverageTracker.getStat();
-        System.out.println(BranchCoverageTracker.arrayIndices);
-        System.out.println(BranchCoverageTracker.branchConstants);
+        System.out.println(LineCoverageTracker.getUniqueLineCoverage());
+        System.out.println(IndicesTracker.arrayIndices);
+        System.out.println(new TreeMap<>(ConstantTracker.branchConstants));
+        System.out.println(BranchCoverageTracker.getUniqueBranchCoverage());
     }
 }
 

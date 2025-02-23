@@ -3,56 +3,36 @@ package org.instrumentation.tracker;
 import java.util.List;
 
 public interface CoverageTracker {
-    int CLASS_BITS = 21;
-    int METHOD_BITS = 21;
-    int INSTRUCTION_BITS = 21;
-    long classMax = (1 << CLASS_BITS) - 1;
-    long methodsMax = (1 << METHOD_BITS) - 1;
-    long instructionMax = (1 << INSTRUCTION_BITS) - 1;
-
-    static Long code(Integer classCnt, Integer methodCnt, Integer branchCnt) {
-        return ((classCnt & classMax) |
-                ((methodCnt & methodsMax) << (CLASS_BITS)) |
-                ((branchCnt & instructionMax) << (CLASS_BITS + METHOD_BITS)));
-    }
-
-    static Integer[] uncode(Long code) {
-        long branchNumber = ((code >> (CLASS_BITS + METHOD_BITS)) & instructionMax);
-        long methodNumber = ((code >> CLASS_BITS) & methodsMax);
-        long classNumber = (code & classMax);
-        return new Integer[]{(int) classNumber, (int) methodNumber, (int) branchNumber};
-    }
-
-    static void getMethodStat(String methodName, Iterable<Long> coverage, Iterable<Long> allCoverage, List<List<String>> methods) {
+    static void getMethodStat(MethodInfo methodInfo, Iterable<Long> coverage, Iterable<Long> allCoverage, List<List<MethodInfo>> methods) {
         long visited = 0;
         for (var cov : coverage) {
-            var data = uncode(cov);
-            if (methods.get(data[0] - 1).get(data[1] - 1).equals(methodName)) {
+            var data = InstrEncoder.decode(cov);
+            if (methods.get((int) data[0]).get((int) data[1]).equals(methodInfo)) {
                 ++visited;
             }
         }
         long all = 0;
         for (var cov : allCoverage) {
-            var data = uncode(cov);
-            if (methods.get(data[0] - 1).get(data[1] - 1).equals(methodName)) {
+            var data = InstrEncoder.decode(cov);
+            if (methods.get((int) data[0]).get((int) data[1]).equals(methodInfo)) {
                 ++all;
             }
         }
-        getStat(methodName, visited, all);
+        getStat(methodInfo.toString(), visited, all);
     }
 
     static void getClassStat(String className, Iterable<Long> coverage, Iterable<Long> allCoverage, List<String> classes) {
         long visited = 0;
         for (var branch : coverage) {
-            var data = CoverageTracker.uncode(branch);
-            if (classes.get(data[0] - 1).equals(className)) {
+            var data = InstrEncoder.decode(branch);
+            if (classes.get((int) data[0]).equals(className)) {
                 ++visited;
             }
         }
         long all = 0;
         for (var cov : allCoverage) {
-            var data = uncode(cov);
-            if (classes.get(data[0] - 1).equals(className)) {
+            var data = InstrEncoder.decode(cov);
+            if (classes.get((int) data[0]).equals(className)) {
                 ++all;
             }
         }
@@ -71,5 +51,4 @@ public interface CoverageTracker {
         System.out.println("===");
         System.out.println();
     }
-
 }

@@ -1,18 +1,14 @@
 package org.instrumentation.agent;
 
+import org.instrumentation.tracker.IndicesTracker;
 import org.instrumentation.tracker.InstrEncoder;
-import org.instrumentation.tracker.LineCoverageTracker;
-import org.instrumentation.tracker.MethodInfo;
 
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
-import java.lang.classfile.instruction.LineNumber;
-import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDescs;
-import java.lang.constant.MethodTypeDesc;
-import java.util.ArrayList;
+import java.lang.classfile.instruction.*;
+import java.util.List;
 
-public class LineAgent implements Agent {
+public class IndicesAgent implements Agent {
     @Override
     public ClassTransform createClassTransform(String className, long classNumber) {
         class ClassTransformStateful implements ClassTransform {
@@ -23,9 +19,6 @@ public class LineAgent implements Agent {
             public ClassTransformStateful(String className, long classNumber) {
                 this.className = className;
                 this.classNumber = classNumber;
-
-                LineCoverageTracker.addClass(className);
-                LineCoverageTracker.getMethods().add(new ArrayList<>());
             }
 
             @Override
@@ -53,8 +46,6 @@ public class LineAgent implements Agent {
                 this.classNumber = classNumber;
                 this.methodModel = methodModel;
                 this.methodNumber = methodNumber;
-
-                LineCoverageTracker.addMethod(new MethodInfo(className, methodModel.methodName().stringValue(), methodModel.methodType().stringValue()));
             }
 
             @Override
@@ -77,6 +68,10 @@ public class LineAgent implements Agent {
             private final MethodModel methodModel;
             private final long methodNumber;
             private final CodeAttribute codeAttribute;
+            private int arrayNumber = 0;
+            private Instruction first = null;
+            private Instruction second = null;
+
 
             public CodeTransformStateful(String className, long classNumber, MethodModel methodModel, long methodNumber, CodeAttribute codeAttribute) {
                 this.className = className;
@@ -86,27 +81,23 @@ public class LineAgent implements Agent {
                 this.codeAttribute = codeAttribute;
             }
 
-            @Override
             public void accept(CodeBuilder builder, CodeElement element) {
-                if (element instanceof LineNumber i) {
-                    long code = InstrEncoder.encode(classNumber, methodNumber, i.line());
-                    builder.
-                            invokestatic(ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"), "getPrev", MethodTypeDesc.ofDescriptor("()J")).
-                            ldc(code).
-                            lcmp();
-                    Label skipLabel = builder.newLabel();
-                    builder.ifeq(skipLabel).
-                            ldc(code)
-                            .invokestatic(
-                                    ClassDesc.of("org.instrumentation.tracker.LineCoverageTracker"),
-                                    "logCoverage",
-                                    MethodTypeDesc.ofDescriptor("(J)V")
-                            );
-                    builder.labelBinding(skipLabel);
-                    LineCoverageTracker.logAllLine(code);
-                    LineCoverageTracker.setPrev(code);
-                }
                 builder.with(element);
+
+                if (!(element instanceof Instruction instruction)) {
+                    return;
+                }
+
+                ++arrayNumber;
+                long code = InstrEncoder.encode(classNumber, methodNumber, arrayNumber);
+                if (instruction instanceof ArrayLoadInstruction && second instanceof ConstantInstruction s) {
+                    IndicesTracker.arrayIndices.put(code, List.of(s.constantValue()));
+                } else if (instruction instanceof ArrayStoreInstruction && first instanceof ConstantInstruction f) {
+                    IndicesTracker.arrayIndices.put(code, List.of(f.constantValue()));
+                }
+
+                first = second;
+                second = instruction;
             }
         }
         return new CodeTransformStateful(className, classNumber, methodModel, methodNumber, codeAttribute);

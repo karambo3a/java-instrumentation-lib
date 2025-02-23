@@ -1,167 +1,123 @@
 package org.instrumentation.agent;
 
 import org.instrumentation.tracker.BranchCoverageTracker;
-import org.instrumentation.tracker.CoverageTracker;
+import org.instrumentation.tracker.InstrEncoder;
+import org.instrumentation.tracker.MethodInfo;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.classfile.*;
 import java.lang.classfile.attribute.CodeAttribute;
 import java.lang.classfile.instruction.*;
 import java.lang.constant.ClassDesc;
-import java.lang.constant.ConstantDesc;
 import java.lang.constant.MethodTypeDesc;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
-import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class BranchAgent {
-    private static List<String> args = List.of();
-    private static Pattern pattern = null;
-    private static Integer classNumber = 0;
+public class BranchAgent implements Agent {
+    @Override
+    public ClassTransform createClassTransform(String className, long classNumber) {
+        class ClassTransformStateful implements ClassTransform {
+            private final String className;
+            private final long classNumber;
+            private long methodNumber = 0;
 
-    public static void premain(String agentArgs, Instrumentation inst) {
-        if (agentArgs != null) {
-            args = List.of(agentArgs.split(","));
-            if (args.size() < 3) {
-                return;
-            }
-            if (args.getFirst().contains("true")) {
-                BranchCoverageTracker.isUnique = true;
-            }
-            if (args.get(1).contains("true")) {
-                pattern = Pattern.compile(args.get(2));
-            }
-        }
+            public ClassTransformStateful(String className, long classNumber) {
+                this.className = className;
+                this.classNumber = classNumber;
 
-//      adds branch coverage tracker
-        inst.addTransformer(new ClassFileTransformer() {
+                BranchCoverageTracker.addClass(className);
+                BranchCoverageTracker.getMethods().add(new ArrayList<>());
+            }
+
             @Override
-            public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain, byte[] classFileBuffer) {
-                if (args.isEmpty()) {
-                    return classFileBuffer;
-                }
-                if (pattern == null && !args.contains(className)) {
-                    return classFileBuffer;
-                }
-
-                if (pattern != null && !pattern.matcher(className).matches()) {
-                    return classFileBuffer;
-                }
-
-                classNumber++;
-                BranchCoverageTracker.classes.add(className);
-                BranchCoverageTracker.methods.add(new ArrayList<>());
-                ClassTransform classTransform = new ClassTransformStateful(classNumber, className);
-
-                var oldClassFile = ClassFile.of().parse(classFileBuffer);
-                var newClassFile = ClassFile.of().transform(oldClassFile, classTransform);
-                saveClassFile(newClassFile);
-                return newClassFile;
-            }
-
-            private void saveClassFile(byte[] classFile) {
-                try (BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream("Example.class"))) {
-                    outputStream.write(classFile);
-                    outputStream.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-    }
-
-    private static class ClassTransformStateful implements ClassTransform {
-        private final int classNumber;
-        private int methodNumber = 0;
-        private final String className;
-
-        public ClassTransformStateful(Integer classCnt, String className) {
-            this.classNumber = classCnt;
-            this.className = className;
-        }
-
-        @Override
-        public void accept(ClassBuilder builder, ClassElement element) {
-            if (element instanceof MethodModel methodModel) {
-                ++methodNumber;
-                BranchCoverageTracker.methods.get(classNumber - 1).add(this.className + '.' + methodModel.methodName().stringValue() + methodModel.methodType().stringValue());
-                builder.transformMethod(methodModel, new MethodTransformStateful(methodModel, methodNumber, classNumber));
-            } else {
-                builder.with(element);
-            }
-        }
-    }
-
-    private record MethodTransformStateful(MethodModel methodModel, Integer methodCnt,
-                                           Integer classCnt) implements MethodTransform {
-
-        @Override
-        public void accept(MethodBuilder builder, MethodElement element) {
-            if (element instanceof CodeModel codeModel) {
-                builder.transformCode(codeModel, new CodeTransformStateful((CodeAttribute) codeModel, methodCnt, classCnt));
-            } else {
-                builder.with(element);
-            }
-        }
-    }
-
-    private static class CodeTransformStateful implements CodeTransform {
-        private final CodeAttribute codeModel;
-        private final Integer methodNumber;
-        private final Integer classNumber;
-        private List<Integer[]> tableSwitch = new ArrayList<>();
-        private List<Integer[]> lookUpSwitch = new ArrayList<>();
-        private int branchNumber = 0;
-        private int lineNumber = 0;
-        private int arrayNumber = 0;
-        private Instruction first = null;
-        private Instruction second = null;
-
-
-        public CodeTransformStateful(CodeAttribute codeModel, Integer methodCnt, Integer classCnt) {
-            this.codeModel = codeModel;
-            this.methodNumber = methodCnt;
-            this.classNumber = classCnt;
-        }
-
-
-        @Override
-        public void accept(CodeBuilder builder, CodeElement element) {
-            if (element instanceof TableSwitchInstruction || element instanceof LookupSwitchInstruction) {
-                ++branchNumber;
-                List<ConstantDesc> switchConstants;
-                if (element instanceof TableSwitchInstruction instruction) {
-                    createSwitchTable(instruction);
-                    switchConstants = instruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+            public void accept(ClassBuilder builder, ClassElement element) {
+                if (element instanceof MethodModel methodModel) {
+                    builder.transformMethod(methodModel, createMethodTransform(className, classNumber, methodModel, methodNumber++));
                 } else {
-                    LookupSwitchInstruction instruction = (LookupSwitchInstruction) element;
-                    createLookUpTable(instruction);
-                    switchConstants = instruction.cases().stream().map(switchCase -> (ConstantDesc) switchCase.caseValue()).toList();
+                    builder.with(element);
                 }
-                long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
-                BranchCoverageTracker.logAllBranch(code);
-                BranchCoverageTracker.branchConstants.put(code, switchConstants);
+            }
+        }
+        return new ClassTransformStateful(className, classNumber);
+    }
+
+    @Override
+    public MethodTransform createMethodTransform(String className, long classNumber, MethodModel methodModel, long methodNumber) {
+        class MethodTransformStateful implements MethodTransform {
+            private final String className;
+            private final long classNumber;
+            private final MethodModel methodModel;
+            private final long methodNumber;
+
+            public MethodTransformStateful(String className, long classNumber, MethodModel methodModel, long methodNumber) {
+                this.className = className;
+                this.classNumber = classNumber;
+                this.methodModel = methodModel;
+                this.methodNumber = methodNumber;
+
+                BranchCoverageTracker.addMethod(new MethodInfo(className, methodModel.methodName().stringValue(), methodModel.methodType().stringValue()));
             }
 
-            builder.with(element);
+            @Override
+            public void accept(MethodBuilder builder, MethodElement element) {
+                if (element instanceof CodeModel codeModel && codeModel instanceof CodeAttribute codeAttribute) {
+                    builder.transformCode(codeModel, createCodeTransform(className, classNumber, methodModel, methodNumber, codeAttribute));
+                } else {
+                    builder.with(element);
+                }
+            }
+        }
+        return new MethodTransformStateful(className, classNumber, methodModel, methodNumber);
+    }
 
-            if (element instanceof Instruction elem) {
-                Integer[] lines = null;
+    @Override
+    public CodeTransform createCodeTransform(String className, long classNumber, MethodModel methodModel, long methodNumber, CodeAttribute codeAttribute) {
+        class CodeTransformStateful implements CodeTransform {
+            private final String className;
+            private final long classNumber;
+            private final MethodModel methodModel;
+            private final long methodNumber;
+            private final CodeAttribute codeAttribute;
+            private List<int[]> tableSwitch = new ArrayList<>();
+            private List<int[]> lookUpSwitch = new ArrayList<>();
+            private int branchNumber = 0;
+            private int lineNumber = 0;
+
+            public CodeTransformStateful(String className, long classNumber, MethodModel methodModel, long methodNumber, CodeAttribute codeAttribute) {
+                this.className = className;
+                this.classNumber = classNumber;
+                this.methodModel = methodModel;
+                this.methodNumber = methodNumber;
+                this.codeAttribute = codeAttribute;
+            }
+
+            public void accept(CodeBuilder builder, CodeElement element) {
+                builder.with(element);
+
+                if (!(element instanceof Instruction instruction)) {
+                    return;
+                }
+
+                if (element instanceof TableSwitchInstruction || element instanceof LookupSwitchInstruction) {
+                    ++branchNumber;
+                    if (element instanceof TableSwitchInstruction tableSwitchInstruction) {
+                        tableSwitch = createSwitchTable(tableSwitchInstruction);
+                    } else {
+                        LookupSwitchInstruction lookupSwitchInstruction = (LookupSwitchInstruction) element;
+                        lookUpSwitch = createLookUpTable(lookupSwitchInstruction);
+                    }
+                    long code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
+                    BranchCoverageTracker.logAllBranch(code);
+                }
+
+                int[] lines = null;
                 if (tableSwitch.stream().anyMatch(l -> l[1] == lineNumber)) {
-                    lines = tableSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().get();
+                    lines = tableSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().orElseThrow();
                 } else if (lookUpSwitch.stream().anyMatch(l -> l[1] == lineNumber)) {
-                    lines = lookUpSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().get();
+                    lines = lookUpSwitch.stream().filter(l -> l[1] == lineNumber).findFirst().orElseThrow();
                 }
                 if (lines != null) {
-                    long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
+                    long code = InstrEncoder.encode(classNumber, methodNumber, lines[0]);
                     builder.ldc(code)
                             .invokestatic(
                                     ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
@@ -169,61 +125,35 @@ public class BranchAgent {
                                     MethodTypeDesc.ofDescriptor("(J)V")
                             );
                 }
-                saveArrayIndecies(elem);
-            }
 
-            if (element instanceof BranchInstruction elem && (elem.opcode() != Opcode.GOTO && elem.opcode() != Opcode.GOTO_W)) {
-                ++branchNumber;
-                long code = CoverageTracker.code(classNumber, methodNumber, branchNumber);
-                builder.ldc(code)
-                        .invokestatic(
-                                ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
-                                "logCoverage",
-                                MethodTypeDesc.ofDescriptor("(J)V")
-                        );
-                BranchCoverageTracker.logAllBranch(code);
-                saveBranchConstant(elem, code);
-            }
-
-            if (element instanceof Instruction elem) {
-                lineNumber += elem.sizeInBytes();
-                first = second;
-                second = elem;
-            }
-        }
-
-        private void createSwitchTable(TableSwitchInstruction instruction) {
-            tableSwitch = instruction.cases().stream().map(i ->
-                    new Integer[]{branchNumber, codeModel.labelToBci(i.target())}
-            ).collect(Collectors.toList());
-        }
-
-        private void createLookUpTable(LookupSwitchInstruction instruction) {
-            lookUpSwitch = instruction.cases().stream().map(i ->
-                    new Integer[]{branchNumber, codeModel.labelToBci(i.target())}
-            ).collect(Collectors.toList());
-        }
-
-        private void saveBranchConstant(BranchInstruction instruction, Long code) {
-            if (Set.of(Opcode.IFEQ, Opcode.IFGE, Opcode.IFGT, Opcode.IFLE, Opcode.IFLT, Opcode.IFNE).contains(instruction.opcode())) {
-                if (second instanceof LoadInstruction) {
-                    BranchCoverageTracker.branchConstants.put(code, List.of(0));
+                if (element instanceof BranchInstruction branchInstruction && (branchInstruction.opcode() != Opcode.GOTO && branchInstruction.opcode() != Opcode.GOTO_W)) {
+                    ++branchNumber;
+                    long code = InstrEncoder.encode(classNumber, methodNumber, branchNumber);
+                    builder.ldc(code)
+                            .invokestatic(
+                                    ClassDesc.of("org.instrumentation.tracker.BranchCoverageTracker"),
+                                    "logCoverage",
+                                    MethodTypeDesc.ofDescriptor("(J)V")
+                            );
+                    BranchCoverageTracker.logAllBranch(code);
+                    BranchCoverageTracker.setPrev(code);
                 }
-            } else if (first instanceof ConstantInstruction f) {
-                BranchCoverageTracker.branchConstants.put(code, List.of(f.constantValue()));
-            } else if (second instanceof ConstantInstruction s) {
-                BranchCoverageTracker.branchConstants.put(code, List.of(s.constantValue()));
-            }
-        }
 
-        private void saveArrayIndecies(Instruction instruction) {
-            ++arrayNumber;
-            long code = CoverageTracker.code(classNumber, methodNumber, arrayNumber);
-            if (instruction instanceof ArrayLoadInstruction && second instanceof ConstantInstruction s) {
-                BranchCoverageTracker.arrayIndices.put(code, List.of(s.constantValue()));
-            } else if (instruction instanceof ArrayStoreInstruction && first instanceof ConstantInstruction f) {
-                BranchCoverageTracker.arrayIndices.put(code, List.of(f.constantValue()));
+                lineNumber += instruction.sizeInBytes();
+            }
+
+            private List<int[]> createSwitchTable(TableSwitchInstruction instruction) {
+                return instruction.cases().stream().map(i ->
+                        new int[]{branchNumber, codeAttribute.labelToBci(i.target())}
+                ).collect(Collectors.toList());
+            }
+
+            private List<int[]> createLookUpTable(LookupSwitchInstruction instruction) {
+                return instruction.cases().stream().map(i ->
+                        new int[]{branchNumber, codeAttribute.labelToBci(i.target())}
+                ).collect(Collectors.toList());
             }
         }
+        return new CodeTransformStateful(className, classNumber, methodModel, methodNumber, codeAttribute);
     }
 }

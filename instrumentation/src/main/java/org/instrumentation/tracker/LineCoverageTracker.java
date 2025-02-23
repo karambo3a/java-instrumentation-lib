@@ -3,18 +3,21 @@ package org.instrumentation.tracker;
 import java.util.*;
 
 public class LineCoverageTracker {
-    public static final Set<Long> uniqueLineCoverage = new HashSet<>();
-    public static final List<Long> notUniqueLineCoverage = new ArrayList<>();
-    public static final Set<Long> allLine = new HashSet<>();
-    public static final List<String> classes = new ArrayList<>();
-    public static final List<List<String>> methods = new ArrayList<>();
-    public static boolean isUnique = false;
+    private static final Set<Long> uniqueLineCoverage = new HashSet<>();
+    private static final List<Long> notUniqueLineCoverage = new ArrayList<>();
+    private static final Set<Long> allLine = new HashSet<>();
+    private static final List<String> classes = new ArrayList<>();
+    private static final List<List<MethodInfo>> methods = new ArrayList<>();
+    private static boolean isUnique = false;
+    private static long prev = 0;
 
     public static void logCoverage(long lineCode) {
-        if (isUnique) {
-            uniqueLineCoverage.add(lineCode);
-        } else {
-            notUniqueLineCoverage.add(lineCode);
+        if (!uniqueLineCoverage.contains(lineCode)) {
+            if (isUnique) {
+                uniqueLineCoverage.add(lineCode);
+            } else {
+                notUniqueLineCoverage.add(lineCode);
+            }
         }
     }
 
@@ -22,11 +25,11 @@ public class LineCoverageTracker {
         allLine.add(lineCode);
     }
 
-    static public void getMethodStat(String methodName) {
+    static public void getMethodStat(MethodInfo methodInfo) {
         if (isUnique) {
-            CoverageTracker.getMethodStat(methodName, uniqueLineCoverage, allLine, methods);
+            CoverageTracker.getMethodStat(methodInfo, uniqueLineCoverage, allLine, methods);
         } else {
-            CoverageTracker.getMethodStat(methodName, notUniqueLineCoverage, allLine, methods);
+            CoverageTracker.getMethodStat(methodInfo, notUniqueLineCoverage, allLine, methods);
         }
     }
 

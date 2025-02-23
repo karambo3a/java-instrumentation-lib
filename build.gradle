@@ -40,16 +40,13 @@ tasks.register('runWithAgents', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 
     doFirst {
-        def lineAgentJar = project(':instrumentation').tasks.lineAgentJar.outputs.files.singleFile
-        def branchAgentJar = project(':instrumentation').tasks.branchAgentJar.outputs.files.singleFile
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
         jvmArgs += [
-                '-javaagent:' + lineAgentJar + '=isUnique=true,isRegex=true,org\\/example\\/[^\\/]+',
-                '-javaagent:' + branchAgentJar + '=isUnique=false,isRegex=false,org/example/Example,org/example/Example2',
+                '-javaagent:' + agentJar + '=isUnique=true,org\\/example\\/[^\\/]+,branch,line,constant,indices',
                 '--enable-preview'
         ]
     }
 }
-// -javaagent:=isUnique=true,isRegex=true,^lesson
 
 tasks.register('runWithLineAgent', JavaExec) {
 
@@ -61,9 +58,9 @@ tasks.register('runWithLineAgent', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 
     doFirst {
-        def lineAgentJar = project(':instrumentation').tasks.lineAgentJar.outputs.files.singleFile
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
         jvmArgs += [
-                '-javaagent:' + lineAgentJar + '=isUnique=true,isRegex=true,org\\/example\\/[^\\/]+',
+                '-javaagent:' + agentJar + '=isUnique=true,org\\/example\\/[^\\/]+,line',
                 '--enable-preview'
         ]
     }
@@ -79,9 +76,45 @@ tasks.register('runWithBranchAgent', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 
     doFirst {
-        def branchAgentJar = project(':instrumentation').tasks.branchAgentJar.outputs.files.singleFile
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
         jvmArgs += [
-                '-javaagent:' + branchAgentJar + '=isUnique=false,isRegex=false,org/example/Example,org/example/Example2',
+                '-javaagent:' + agentJar + '=isUnique=true,org\\/example\\/[^\\/]+,branch',
+                '--enable-preview'
+        ]
+    }
+}
+
+tasks.register('runWithConstantAgent', JavaExec) {
+
+    group = "Application"
+    description = "Runs the application with a Java agent"
+
+    setMainClass("org.example.Example")
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    doFirst {
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
+        jvmArgs += [
+                '-javaagent:' + agentJar + '=isUnique=true,org\\/example\\/[^\\/]+,constant',
+                '--enable-preview'
+        ]
+    }
+}
+
+tasks.register('runWithIndicesAgent', JavaExec) {
+
+    group = "Application"
+    description = "Runs the application with a Java agent"
+
+    setMainClass("org.example.Example")
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    doFirst {
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
+        jvmArgs += [
+                '-javaagent:' + agentJar + '=isUnique=true,org\\/example\\/[^\\/]+,indices',
                 '--enable-preview'
         ]
     }
