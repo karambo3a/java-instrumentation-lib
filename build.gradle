@@ -22,12 +22,15 @@ dependencies {
     implementation project(':instrumentation')
 }
 
-compileJava {
-    options.compilerArgs += ['--enable-preview']
-}
-
 test {
     useJUnitPlatform()
+    doFirst {
+        def agentJar = project(':instrumentation').tasks.agentJar.outputs.files.singleFile
+        jvmArgs += [
+                '-javaagent:' + agentJar + '=isUnique=true,org/example/Example|org/example/Example2,branch,line,constant,indices',
+                '--enable-preview'
+        ]
+    }
 }
 
 tasks.register('runWithAgents', JavaExec) {

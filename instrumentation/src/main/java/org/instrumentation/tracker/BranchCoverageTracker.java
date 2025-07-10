@@ -9,7 +9,7 @@ public class BranchCoverageTracker {
     private static final List<String> classes = new ArrayList<>();
     private static final List<List<MethodInfo>> methods = new ArrayList<>();
     private static boolean isUnique = false;
-    private static long prev = 0;
+    private static long prev = -1;
 
     public static void logCoverage(long branchNumber) {
         if (isUnique) {
@@ -21,6 +21,14 @@ public class BranchCoverageTracker {
 
     public static void logAllBranch(long branchNumber) {
         allBranch.add(branchNumber);
+    }
+
+    public static long countMethodMetrics(MethodInfo methodInfo, Iterable<Long> coverage, List<List<MethodInfo>> methods) {
+        return CoverageTracker.countMethodMetrics(methodInfo, coverage, methods);
+    }
+
+    public static long countClassMetrics(String className, Iterable<Long> coverage, List<String> classes) {
+        return CoverageTracker.countClassMetrics(className, coverage, classes);
     }
 
     static public void getMethodStat(MethodInfo methodInfo) {

@@ -21,6 +21,9 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
+compileJava {
+    options.compilerArgs += ['--enable-preview']
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add("--enable-preview")

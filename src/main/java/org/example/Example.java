@@ -1,17 +1,13 @@
 package org.example;
 
-import org.instrumentation.tracker.*;
-
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Example {
-
-    private final int const1 = 3;
-    public String const2;
     public static List<Integer> list = new ArrayList<>();
 
-    public static int getNumber1(int a, Long  b) {    //// a = 1  b = 2
+    public static int getNumber1(int a, Long b) {    //// a = 1  b = 2
         if (a > b) {
             return -1;
         } else if (a < b) {  /// 1 < 2
@@ -165,6 +161,7 @@ public class Example {
         for (var i : l) {
             System.out.print(i + " ");
         }
+        System.out.println();
     }
 
     public static void stringSwitchCase(String a) {
@@ -175,7 +172,8 @@ public class Example {
             case "aaaaa" -> {
                 var b = a + "b";
             }
-            default -> {}
+            default -> {
+            }
         }
     }
 
@@ -197,45 +195,7 @@ public class Example {
     }
 
 
-
     public static void main(String[] args) {
-        System.out.println("---");
-        System.out.println("Main output\n");
-        System.out.println(getNumber1(1, 2L));
-        System.out.println(getString());
-        voidMethod();
-        ifStatement(10);
-        ifELseStatement(-1);
-        System.out.println(lookUpSwitch(10));
-        System.out.println(tableSwitch(20));
-        forLoop(1);
-        whileLoop(15);
-        doWhileLoop(6);
-        System.out.println(instanceOfStatement(10));
-        nestedIfElseLoop(15);
-        ternaryOperator(1);
-        tryCatch();
-//        Example2.fun();
-        rangeForLoop();
-        stringSwitchCase("aaa");
-//        array();
-
-        System.out.println();
-        System.out.println("---");
-        System.out.println("Line Coverage\n");
-        LineCoverageTracker.getClassStat("org/example/Example");
-        LineCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "nestedIfElseLoop", "(I)V"));
-        LineCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "of", "()V"));
-        LineCoverageTracker.getStat();
-        System.out.println("---");
-        System.out.println("Branch Coverage\n");
-        BranchCoverageTracker.getClassStat("org/example/Example");
-        BranchCoverageTracker.getMethodStat(new MethodInfo("org/example/Example", "nestedIfElseLoop", "(I)V"));
-        BranchCoverageTracker.getStat();
-        System.out.println(LineCoverageTracker.getUniqueLineCoverage());
-        System.out.println(IndicesTracker.getArrayIndices());
-        System.out.println(new TreeMap<>(ConstantTracker.getBranchConstants()));
-        System.out.println(BranchCoverageTracker.getUniqueBranchCoverage());
     }
 }
 

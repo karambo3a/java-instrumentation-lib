@@ -3,39 +3,37 @@ package org.instrumentation.tracker;
 import java.util.List;
 
 public interface CoverageTracker {
-    static void getMethodStat(MethodInfo methodInfo, Iterable<Long> coverage, Iterable<Long> allCoverage, List<List<MethodInfo>> methods) {
-        long visited = 0;
+    static long countMethodMetrics(MethodInfo methodInfo, Iterable<Long> coverage, List<List<MethodInfo>> methods) {
+        long metric = 0L;
         for (var cov : coverage) {
             var data = InstrEncoder.decode(cov);
             if (methods.get((int) data[0]).get((int) data[1]).equals(methodInfo)) {
-                ++visited;
+                ++metric;
             }
         }
-        long all = 0;
-        for (var cov : allCoverage) {
-            var data = InstrEncoder.decode(cov);
-            if (methods.get((int) data[0]).get((int) data[1]).equals(methodInfo)) {
-                ++all;
-            }
-        }
+        return metric;
+    }
+
+    static void getMethodStat(MethodInfo methodInfo, Iterable<Long> coverage, Iterable<Long> allCoverage, List<List<MethodInfo>> methods) {
+        long visited = countMethodMetrics(methodInfo, coverage, methods);
+        long all = countMethodMetrics(methodInfo, allCoverage, methods);
         getStat(methodInfo.toString(), visited, all);
     }
 
-    static void getClassStat(String className, Iterable<Long> coverage, Iterable<Long> allCoverage, List<String> classes) {
-        long visited = 0;
-        for (var branch : coverage) {
-            var data = InstrEncoder.decode(branch);
-            if (classes.get((int) data[0]).equals(className)) {
-                ++visited;
-            }
-        }
-        long all = 0;
-        for (var cov : allCoverage) {
+    static long countClassMetrics(String className, Iterable<Long> coverage, List<String> classes) {
+        long metric = 0L;
+        for (var cov : coverage) {
             var data = InstrEncoder.decode(cov);
             if (classes.get((int) data[0]).equals(className)) {
-                ++all;
+                ++metric;
             }
         }
+        return metric;
+    }
+
+    static void getClassStat(String className, Iterable<Long> coverage, Iterable<Long> allCoverage, List<String> classes) {
+        long visited = countClassMetrics(className, coverage, classes);
+        long all = countClassMetrics(className, allCoverage, classes);
         getStat(className, visited, all);
     }
 
